@@ -15,4 +15,12 @@ else()
 	message(FATAL_ERROR " CUDA not found!")
 endif()
 
+set(SFML_STATIC_LIBRARIES TRUE)
+set(SFML_DIR "external/SFML/lib/cmake/SFML")
 
+find_package(SFML 2.5.1 COMPONENTS system window graphics network audio REQUIRED)
+if (SFML_FOUND)
+	target_link_libraries(run sfml-system sfml-window sfml-graphics sfml-network sfml-audio)
+else()
+	message(FATAL_ERROR " SFML 2.5.1 not found!")
+endif()
