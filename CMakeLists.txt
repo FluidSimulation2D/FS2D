@@ -24,3 +24,13 @@ if (SFML_FOUND)
 else()
 	message(FATAL_ERROR " SFML 2.5.1 not found!")
 endif()
+
+set(TGUI_STATIC_LIBRARIES TRUE)
+set(TGUI_DIR "external/TGUI/lib/cmake/TGUI")
+
+find_package(TGUI 0.10 REQUIRED)
+if (TGUI_FOUND)
+	target_link_libraries(run TGUI::TGUI)
+else()
+	message(FATAL_ERROR " TGUI 0.1 not found!")
+endif()

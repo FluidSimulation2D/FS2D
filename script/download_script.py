@@ -5,28 +5,36 @@ import os
 if __name__ == "__main__":
     print("\nDownload dependencies")
 
-    if os.path.exists("../external/SFML"):
-        print("-> SFML already downloaded\nSuccess")
-        exit(0)
+    libs_names = {"SFML" : "SFML-2.5.1",
+                  "TGUI" : "TGUI-1.0" }
+    
+    libs = {"SFML" : "https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip",
+            "TGUI" : "https://github.com/texus/TGUI/releases/download/v1.0-alpha/TGUI-1.0-alpha-VisualStudio-64bit-for-SFML-2.5.1.zip" }
 
     try:
         externalPath = "../external"
         os.mkdir(externalPath)
         os.chdir(externalPath)
 
-        URL = "https://www.sfml-dev.org/files/SFML-2.5.1-windows-vc15-64-bit.zip"
-        print("-> Downloading sfml library from: " + URL)
-        with open("sfml.zip", "wb") as file:
-            file.write(requests.get(URL).content)
+        for name, url in libs.items():
 
-        print("-> Extracting files from archive")
-        with zipfile.ZipFile("sfml.zip") as zip:
-            zip.extractall("./")
+            if os.path.exists("../external/{}".format(name)):
+                print("-> {} already downloaded\n".format(name))
+                continue
+            
+            print("-> Downloading {} library from: {}".format(name).format(url))
+            with open("{}.zip".format(name), "wb") as file:
+                file.write(requests.get(url).content)
 
-        os.rename("SFML-2.5.1", "SFML")
-        os.remove("sfml.zip")
+            print("-> Extracting files from archive")
+            with zipfile.ZipFile("{}.zip".format(name)) as zip:
+                zip.extractall("./")
 
-        print("Success")
+            os.rename(libs_names[name], name)
+            os.remove("{}.zip".format(name))
+
+            print("Success with {}".format(name))
+            
     except BaseException:
         print("-> Error was occured\nFail")
         exit(0)
