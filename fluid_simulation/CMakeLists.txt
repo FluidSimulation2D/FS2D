@@ -9,10 +9,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../math/include)
 
 set(HEADERS
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Windows/MainWindow.h
     )
 
 set(SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/Windows/MainWindow.cpp
     )
 
 add_executable(run ${SOURCES} ${HEADERS})
