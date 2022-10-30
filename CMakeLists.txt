@@ -16,7 +16,7 @@ else()
 endif()
 
 set(SFML_STATIC_LIBRARIES TRUE)
-set(SFML_DIR "external/SFML/lib/cmake/SFML")
+set(SFML_DIR "external/SFML-2.5.1/lib/cmake/SFML")
 
 find_package(SFML 2.5.1 COMPONENTS system window graphics network audio REQUIRED)
 if (SFML_FOUND)
@@ -26,7 +26,7 @@ else()
 endif()
 
 set(TGUI_STATIC_LIBRARIES TRUE)
-set(TGUI_DIR "external/TGUI/lib/cmake/TGUI")
+set(TGUI_DIR "external/TGUI-1.0/lib/cmake/TGUI")
 
 find_package(TGUI 0.10 REQUIRED)
 if (TGUI_FOUND)
