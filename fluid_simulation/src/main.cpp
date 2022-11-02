@@ -1,4 +1,3 @@
-#include "sum.h"
 #include <iostream>
 #include <chrono>
 
@@ -6,7 +5,8 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
-#include "../../fluid_simulation/src/Windows/MainWindow.h"
+#include "sum.h"
+#include "window.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720

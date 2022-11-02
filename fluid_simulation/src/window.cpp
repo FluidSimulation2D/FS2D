@@ -1,39 +1,36 @@
-#include "MainWindow.h"
+#include "window.h"
 
-MainWindow::MainWindow() : sf::RenderWindow({ 1280, 720 }, "") // { m_base_properties.width, m_base_properties.height }, "")
+MainWindow::MainWindow() : sf::RenderWindow({ 1280, 720 }, "Fluid Simuation 2D") // { m_base_properties.width, m_base_properties.height }, "")
 {
 	m_base_properties = BaseWindowProperties();
-	setTitle("Fluid Simulation");
 	m_pixel_buffer.resize(m_base_properties.field_width * m_base_properties.field_height * 4);
 	m_fluid_texture.create(m_base_properties.field_width, m_base_properties.field_height);
 
-    m_gui.setWindow(*this);
+	m_gui.setWindow(*this);
 }
 
 MainWindow::MainWindow(sf::VideoMode _video_mode, const sf::String& _title, sf::Uint32 _style, const sf::ContextSettings& _ctx_settings) :
-    sf::RenderWindow(_video_mode, _title, _style, _ctx_settings),
+	sf::RenderWindow(_video_mode, _title, _style, _ctx_settings),
 	m_base_properties(_video_mode.width, _video_mode.height)
 {
 	m_pixel_buffer.resize(m_base_properties.field_width * m_base_properties.field_height * 4);
 	m_fluid_texture.create(m_base_properties.field_width, m_base_properties.field_height);
 
-    m_gui.setWindow(*this);
+	m_gui.setWindow(*this);
 }
 
 MainWindow::MainWindow(sf::WindowHandle _window_handle, const sf::ContextSettings& _ctx_settings) :
-    sf::RenderWindow(_window_handle, _ctx_settings)
+	sf::RenderWindow(_window_handle, _ctx_settings)
 {
 	m_base_properties = BaseWindowProperties(getSize().x, getSize().y);
 
 	m_pixel_buffer.resize(m_base_properties.field_width * m_base_properties.field_height * 4);
 	m_fluid_texture.create(m_base_properties.field_width, m_base_properties.field_height);
 
-    m_gui.setWindow(*this);
+	m_gui.setWindow(*this);
 }
 
-MainWindow::~MainWindow()
-{
-}
+MainWindow::~MainWindow() {}
 
 void MainWindow::mainLoop()
 {
@@ -47,7 +44,7 @@ void MainWindow::mainLoop()
 	menu_rect.setOutlineColor({ 180, 180, 180 });
 	menu_rect.setOutlineThickness(2.5);
 
-    while (isOpen())
+	while (isOpen())
 	{
 		clear(sf::Color::White);
 
@@ -73,13 +70,13 @@ void MainWindow::mainLoop()
 					m_last_mouse_pos = { event.mouseButton.x, event.mouseButton.y };
 					m_last_mouse_pos /= (int)m_base_properties.scale;
 
-					b_is_influensed = true;
+					b_is_influenced = true;
 				}
 			}
 
-			if (event.type = sf::Event::MouseButtonReleased)
+			if (event.type == sf::Event::MouseButtonReleased)
 			{
-				b_is_influensed = false;
+				b_is_influenced = false;
 			}
 
 			if (event.type == sf::Event::MouseMoved)
@@ -116,15 +113,9 @@ void MainWindow::mainLoop()
 	}
 }
 
-void MainWindow::computeField()
-{
+void MainWindow::computeField() {}
 
-}
-
-void MainWindow::updateFluidConfig()
-{
-
-}
+void MainWindow::updateFluidConfig() {}
 
 void MainWindow::createMenu()
 {
@@ -219,7 +210,6 @@ void MainWindow::createMenu()
 	main_props_group->add(main_props_grid);
 	m_menu_group->add(main_props_group);
 
-
 	/// BLOOM GROUP
 	auto bloom_group = tgui::Group::create();
 	auto bloom_grid = tgui::Grid::create();
@@ -249,7 +239,6 @@ void MainWindow::createMenu()
 	bloom_group->add(bloom_grid);
 	bloom_group->setPosition(0, main_props_grid->getSize().y + 20);
 	m_menu_group->add(bloom_group);
-
 
 	/// COLOR GROUP
 	auto color_group = tgui::Group::create();
