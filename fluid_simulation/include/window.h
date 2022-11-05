@@ -13,7 +13,7 @@ struct FluidConfig
 	float vorticity = 0.f;
 
 	float forceScale = 0.f;
-	int forceRadius = 0.f;
+	int forceRadius = 0;
 
 	float bloomIntense = 0.f;
 	bool bBloomEnabled = true;
@@ -23,7 +23,7 @@ struct FluidConfig
 	sf::Color color = { 128, 128, 128 };
 
 	FluidConfig(float _velocityDiffusion = 0.8f, float _colorDiffusion = 0.8f, float _densityDiffusion = 1.2f,
-		float _pressure = 1.5f, float _vorticity = 50.f, float _forceScale = 1000.f, float _forceRadius = 100.f,
+		float _pressure = 1.5f, float _vorticity = 50.f, float _forceScale = 1000.f, int _forceRadius = 100,
 		float _bloomIntense = 25000.f, bool _bloomEnabled = true, sf::Color _color = { 128, 128, 128 }, bool _colorful = false) :
 		velocityDiffusion(_velocityDiffusion), colorDiffusion(_colorDiffusion), densityDiffusion(_densityDiffusion),
 		pressure(_pressure), vorticity(_vorticity), forceScale(_forceScale), forceRadius(_forceRadius),

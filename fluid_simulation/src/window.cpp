@@ -1,6 +1,6 @@
 #include "window.h"
 
-MainWindow::MainWindow() : sf::RenderWindow({ 1280, 720 }, "Fluid Simuation 2D") // { mBaseProperties.width, mBaseProperties.height }, "")
+MainWindow::MainWindow() : sf::RenderWindow({ 1280, 720 }, "Fluid Simuation 2D")
 {
 	mBaseProperties = BaseWindowProperties();
 	mPixelBuffer.resize(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4);
@@ -60,7 +60,7 @@ void MainWindow::mainLoop()
 				if (event.mouseButton.button == sf::Mouse::Left)
 				{
 					mLastMousePos = { event.mouseButton.x, event.mouseButton.y };
-					mLastMousePos /= (int)mBaseProperties.scale;
+					mLastMousePos /= static_cast<int>(mBaseProperties.scale);
 
 					bIsInfluenced = true;
 				}
@@ -75,7 +75,7 @@ void MainWindow::mainLoop()
 			{
 				std::swap(mCurMousePos, mLastMousePos);
 				mCurMousePos = { event.mouseButton.x, event.mouseButton.y };
-				mCurMousePos /= (int)mBaseProperties.scale;
+				mCurMousePos /= static_cast<int>(mBaseProperties.scale);
 			}
 
 			if (event.type == sf::Event::KeyPressed)
@@ -94,7 +94,7 @@ void MainWindow::mainLoop()
 
 		mFluidTexture.update(mPixelBuffer.data());
 		mFluidSprite.setTexture(mFluidTexture);
-		mFluidSprite.setScale({ (float)mBaseProperties.scale, (float)mBaseProperties.scale });
+		mFluidSprite.setScale({ static_cast<float>(mBaseProperties.scale), static_cast<float>(mBaseProperties.scale) });
 
 		draw(menu_rect);
 		mGui.draw();
@@ -109,7 +109,7 @@ void MainWindow::updateFluidConfig() {}
 
 void MainWindow::createMenu()
 {
-	mMenuGroup = tgui::Group::create({ "17%", "100%" });
+	mMenuGroup = tgui::Group::create({ "17%", "100%" }); // ширина меню = 1/5 от ширины окна отрисовки -> 1/6 от ширины всего окна (в %)
 	setSize({ sf::Uint16(getSize().x * 1.2f), getSize().y });
 
 	// MAIN PROPERTIES GROUP
@@ -306,7 +306,7 @@ void MainWindow::OnForceChanged(const tgui::String& _newValue)
 
 void MainWindow::OnRadiusChanged(const tgui::String& _newValue)
 {
-	mFluidConfig.forceRadius = _newValue.toFloat();
+	mFluidConfig.forceRadius = _newValue.toInt();
 	updateFluidConfig();
 }
 
