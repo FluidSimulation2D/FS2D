@@ -1,8 +1,13 @@
-#include "sum.h"
 #include <iostream>
+
+#include "sum.h"
+#include "window.h"
 
 int main()
 {
-	std::cout << sum(3, 5) << std::endl;
+	MainWindow window;
+
+	window.mainLoop();
+
 	return 0;
 }
