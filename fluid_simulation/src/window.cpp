@@ -1,6 +1,6 @@
 #include "window.h"
 
-MainWindow::MainWindow() : sf::RenderWindow({ 1280, 720 }, "Fluid Simuation 2D")
+MainWindow::MainWindow() : sf::RenderWindow({ WINDOW_WIDTH, WINDOW_HEIGHT }, "Fluid Simuation 2D")
 {
 	mBaseProperties = BaseWindowProperties();
 	mPixelBuffer.resize(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4);
@@ -109,7 +109,8 @@ void MainWindow::updateFluidConfig() {}
 
 void MainWindow::createMenu()
 {
-	mMenuGroup = tgui::Group::create({ "17%", "100%" }); // ширина меню = 1/5 от ширины окна отрисовки -> 1/6 от ширины всего окна (в %)
+	// menu width = 1/5 of fluid draw window width -> 1/6 of application window width (in %)
+	mMenuGroup = tgui::Group::create({ "17%", "100%" });
 	setSize({ sf::Uint16(getSize().x * 1.2f), getSize().y });
 
 	// MAIN PROPERTIES GROUP
@@ -264,6 +265,24 @@ void MainWindow::createMenu()
 	colorGroup->setPosition(0, mainPropsGrid->getSize().y + bloomGroup->getSize().y + 5 * 20);
 	mMenuGroup->add(colorGroup);
 
+	// MODE GROUP
+	auto modeGroup = tgui::Group::create();
+	auto modeGrid = tgui::Grid::create();
+
+	// parallel mode
+	auto modeTitle = tgui::Label::copy(velocityDiffTitle);
+	modeTitle->setText("Parallel mode:");
+	auto modeCheckbox = tgui::CheckBox::create();
+	modeCheckbox->setChecked(false);
+	modeCheckbox->onChange(&MainWindow::OnModeChecked, this);
+
+	modeGrid->addWidget(modeTitle, 0, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
+	modeGrid->addWidget(modeCheckbox, 0, 1, tgui::Grid::Alignment::Center, tgui::Padding(20, 4, 0, 4));
+
+	modeGroup->add(modeGrid);
+	modeGroup->setPosition(0, mainPropsGrid->getSize().y + bloomGroup->getSize().y + colorGroup->getSize().y + 225);
+	mMenuGroup->add(modeGroup);
+
 	mMenuGroup->setPosition(10, 10);
 	mGui.add(mMenuGroup);
 }
@@ -344,4 +363,9 @@ void MainWindow::OnColorfulChecked(bool _isChecked)
 {
 	mFluidConfig.bColorful = _isChecked;
 	updateFluidConfig();
+}
+
+void MainWindow::OnModeChecked(bool _isChecked)
+{
+	bParallelMode = _isChecked;
 }

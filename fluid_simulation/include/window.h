@@ -3,6 +3,9 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+
 struct FluidConfig
 {
 	float velocityDiffusion = 0.f;
@@ -40,7 +43,7 @@ struct BaseWindowProperties
 	sf::Uint16 fieldWidth;
 	sf::Uint16 fieldHeight;
 
-	BaseWindowProperties(sf::Uint16 _width = 1280, sf::Uint16 _height = 720, sf::Uint8 _scale = 2) :
+	BaseWindowProperties(sf::Uint16 _width = WINDOW_WIDTH, sf::Uint16 _height = WINDOW_HEIGHT, sf::Uint8 _scale = 2) :
 		width(_width), height(_height), scale(_scale)
 	{
 		fieldWidth = width / scale;
@@ -61,10 +64,13 @@ public:
 
 protected: // Main functions
 
+	// creating menu with fluid configurations
 	void createMenu();
 
+	// updating fluid configuration for future calculations
 	void updateFluidConfig();
 
+	// main calculations
 	void computeField();
 
 protected: // Properties
@@ -82,6 +88,8 @@ protected: // Properties
 
 	FluidConfig mFluidConfig;
 	bool bFluidChanged = false;
+
+	bool bParallelMode = false;
 
 	std::vector<sf::Uint8> mPixelBuffer;
 	sf::Texture mFluidTexture;
@@ -113,4 +121,6 @@ protected: // SIGNALS
 
 	void OnBloomChecked(bool _isChecked);
 	void OnColorfulChecked(bool _isChecked);
+
+	void OnModeChecked(bool _isChecked);
 };
