@@ -25,14 +25,16 @@ cmake --build . --config release
 if errorlevel 1 goto cmakeError
 
 cd ..
-goto OK
+@echo OK
+goto exit
 
 :pythonError
-@echo Error while downloading SFML
+@echo Error while downloading SFML and TGUI
+goto exit
 
 :cmakeError
 @echo Error while using cmake
+goto exit
 
-:OK
-
+:exit
 pause
