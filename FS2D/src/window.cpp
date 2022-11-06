@@ -1,9 +1,10 @@
 #include "window.h"
+#include "fluid.h"
 
 MainWindow::MainWindow() : sf::RenderWindow({ WINDOW_WIDTH, WINDOW_HEIGHT }, "Fluid Simuation 2D")
 {
 	mBaseProperties = BaseWindowProperties();
-	mPixelBuffer.resize(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4);
+	mPixelBuffer.resize(static_cast<size_t>(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4));
 	mFluidTexture.create(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
 
 	mGui.setWindow(*this);
@@ -13,7 +14,7 @@ MainWindow::MainWindow(sf::VideoMode _videoMode, const sf::String& _title, sf::U
 	sf::RenderWindow(_videoMode, _title, _style, _ctxSettings),
 	mBaseProperties(_videoMode.width, _videoMode.height)
 {
-	mPixelBuffer.resize(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4);
+	mPixelBuffer.resize(static_cast<size_t>(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4));
 	mFluidTexture.create(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
 
 	mGui.setWindow(*this);
@@ -24,7 +25,7 @@ MainWindow::MainWindow(sf::WindowHandle _windowHandle, const sf::ContextSettings
 {
 	mBaseProperties = BaseWindowProperties(getSize().x, getSize().y);
 
-	mPixelBuffer.resize(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4);
+	mPixelBuffer.resize(static_cast<size_t>(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4));
 	mFluidTexture.create(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
 
 	mGui.setWindow(*this);
@@ -34,6 +35,8 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::mainLoop()
 {
+	initialization(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
+
 	createMenu();
 	mFluidSprite.setPosition({ mMenuGroup->getSize().x, 0});
 	auto menu_rect = sf::RectangleShape(mMenuGroup->getSize());
@@ -74,7 +77,7 @@ void MainWindow::mainLoop()
 			if (event.type == sf::Event::MouseMoved)
 			{
 				std::swap(mCurMousePos, mLastMousePos);
-				mCurMousePos = { event.mouseButton.x, event.mouseButton.y };
+				mCurMousePos = { event.mouseMove.x, event.mouseMove.y };
 				mCurMousePos /= static_cast<int>(mBaseProperties.scale);
 			}
 
@@ -89,7 +92,7 @@ void MainWindow::mainLoop()
 
 		if (!bIsPaused)
 		{
-			computeField();
+			compute(mPixelBuffer.data(), mLastMousePos.x, mLastMousePos.y, mCurMousePos.x, mCurMousePos.y, bIsInfluenced);
 		}
 
 		mFluidTexture.update(mPixelBuffer.data());
@@ -101,9 +104,9 @@ void MainWindow::mainLoop()
 		draw(mFluidSprite);
 		display();
 	}
-}
 
-void MainWindow::computeField() {}
+	finalization();
+}
 
 void MainWindow::updateFluidConfig() {}
 
