@@ -1,6 +1,3 @@
-#include <iostream>
-
-#include "sum.h"
 #include "window.h"
 
 int main()

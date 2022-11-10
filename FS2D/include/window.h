@@ -70,9 +70,6 @@ protected: // Main functions
 	// updating fluid configuration for future calculations
 	void updateFluidConfig();
 
-	// main calculations
-	void computeField();
-
 protected: // Properties
 
 	tgui::Gui mGui;
