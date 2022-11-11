@@ -1,9 +1,8 @@
 #include "window.h"
-#include "fluid.h"
 
-MainWindow::MainWindow() : sf::RenderWindow({ WINDOW_WIDTH, WINDOW_HEIGHT }, "Fluid Simuation 2D")
+MainWindow::MainWindow() : sf::RenderWindow({ WINDOW_WIDTH + MENU_WIDTH, WINDOW_HEIGHT }, "Fluid Simuation 2D")
 {
-	mBaseProperties = BaseWindowProperties();
+	mBaseProperties = BaseWindowProperties(WINDOW_WIDTH + MENU_WIDTH, WINDOW_HEIGHT);
 	mPixelBuffer.resize(static_cast<size_t>(mBaseProperties.fieldWidth * mBaseProperties.fieldHeight * 4));
 	mFluidTexture.create(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
 
@@ -36,13 +35,17 @@ MainWindow::~MainWindow() {}
 void MainWindow::mainLoop()
 {
 	initialization(mBaseProperties.fieldWidth, mBaseProperties.fieldHeight);
-
 	createMenu();
-	mFluidSprite.setPosition({ mMenuGroup->getSize().x, 0});
+
 	auto menu_rect = sf::RectangleShape(mMenuGroup->getSize());
 	menu_rect.setFillColor({ 200, 200, 200 });
 	menu_rect.setOutlineColor({ 180, 180, 180 });
 	menu_rect.setOutlineThickness(2.5);
+
+	int offset = mMenuGroup->getSize().x;
+
+	mFluidSprite.setPosition(mMenuGroup->getSize().x, 0);
+	mFluidSprite.setScale({ static_cast<float>(mBaseProperties.scale), static_cast<float>(mBaseProperties.scale) });
 
 	while (isOpen())
 	{
@@ -62,7 +65,7 @@ void MainWindow::mainLoop()
 			{
 				if (event.mouseButton.button == sf::Mouse::Left)
 				{
-					mLastMousePos = { event.mouseButton.x, event.mouseButton.y };
+					mLastMousePos = { event.mouseButton.x - offset, event.mouseButton.y };
 					mLastMousePos /= static_cast<int>(mBaseProperties.scale);
 
 					bIsInfluenced = true;
@@ -77,7 +80,8 @@ void MainWindow::mainLoop()
 			if (event.type == sf::Event::MouseMoved)
 			{
 				std::swap(mCurMousePos, mLastMousePos);
-				mCurMousePos = { event.mouseMove.x, event.mouseMove.y };
+
+				mCurMousePos = { event.mouseMove.x - offset, event.mouseMove.y };
 				mCurMousePos /= static_cast<int>(mBaseProperties.scale);
 			}
 
@@ -92,29 +96,40 @@ void MainWindow::mainLoop()
 
 		if (!bIsPaused)
 		{
+			if (bFluidChanged)
+			{
+				updateFluidConfig();
+				bFluidChanged = false;
+			}
+
 			compute(mPixelBuffer.data(), mLastMousePos.x, mLastMousePos.y, mCurMousePos.x, mCurMousePos.y, bIsInfluenced);
 		}
 
 		mFluidTexture.update(mPixelBuffer.data());
-		mFluidSprite.setTexture(mFluidTexture);
-		mFluidSprite.setScale({ static_cast<float>(mBaseProperties.scale), static_cast<float>(mBaseProperties.scale) });
-
-		draw(menu_rect);
-		mGui.draw();
+		mFluidSprite.setTexture(mFluidTexture, false);
+		
 		draw(mFluidSprite);
+
+		mGui.draw();
+
 		display();
 	}
 
 	finalization();
 }
 
-void MainWindow::updateFluidConfig() {}
+void MainWindow::updateFluidConfig()
+{
+	setConfig(mFluidConfig.velocityDiffusion, mFluidConfig.colorDiffusion, mFluidConfig.densityDiffusion, mFluidConfig.pressure, mFluidConfig.vorticity,
+		mFluidConfig.forceScale, mFluidConfig.bloomIntense, mFluidConfig.dt, mFluidConfig.radius, mFluidConfig.velocityIterations, mFluidConfig.pressureIterations,
+		mFluidConfig.xThreads, mFluidConfig.yThreads, mFluidConfig.bloomEnabled, mFluidConfig.bColorful, mFluidConfig.bParallel, 
+		mFluidConfig.color[0], mFluidConfig.color[1], mFluidConfig.color[2]);
+}
 
 void MainWindow::createMenu()
 {
 	// menu width = 1/5 of fluid draw window width -> 1/6 of application window width (in %)
-	mMenuGroup = tgui::Group::create({ "17%", "100%" });
-	setSize({ sf::Uint16(getSize().x * 1.2f), getSize().y });
+	mMenuGroup = tgui::Group::create({ "16.666666%", "100%" });
 
 	// MAIN PROPERTIES GROUP
 	auto mainPropsGroup = tgui::Group::create();
@@ -193,7 +208,7 @@ void MainWindow::createMenu()
 	auto radiusTitle = tgui::Label::copy(velocityDiffTitle);
 	radiusTitle->setText("Radius:");
 	tgui::EditBox::Ptr radiusEdit = tgui::EditBox::copy(velocityDiffEdit);
-	radiusEdit->setText(std::to_string(mFluidConfig.forceRadius));
+	radiusEdit->setText(std::to_string(mFluidConfig.radius));
 	radiusEdit->onReturnKeyPress(&MainWindow::OnRadiusChanged, this);
 
 	mainPropsGrid->addWidget(radiusTitle, 6, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
@@ -212,7 +227,7 @@ void MainWindow::createMenu()
 	auto bloomEnableTitle = tgui::Label::copy(velocityDiffTitle);
 	bloomEnableTitle->setText("Bloom:");
 	auto bloomEnableCheckbox = tgui::CheckBox::create();
-	bloomEnableCheckbox->setChecked(true);
+	bloomEnableCheckbox->setChecked(mFluidConfig.bloomEnabled);
 	bloomEnableCheckbox->onChange(&MainWindow::OnBloomChecked, this);
 
 	bloomGrid->addWidget(bloomEnableTitle, 0, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
@@ -242,7 +257,7 @@ void MainWindow::createMenu()
 	auto colorfulTitle = tgui::Label::copy(velocityDiffTitle);
 	colorfulTitle->setText("Colorful:");
 	auto colorfulCheckbox = tgui::CheckBox::create();
-	colorfulCheckbox->setChecked(false);
+	colorfulCheckbox->setChecked(mFluidConfig.bColorful);
 	colorfulCheckbox->onChange(&MainWindow::OnColorfulChecked, this);
 
 	colorGrid->addWidget(colorfulTitle, 0, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
@@ -252,11 +267,13 @@ void MainWindow::createMenu()
 	colorTitle->setText("Edit color:");
 	auto colorREdit = tgui::EditBox::copy(bloomIntenseEdit);
 	colorREdit->setMaximumCharacters(3U);
-	colorREdit->setText(std::to_string(128));
+	colorREdit->setText(std::to_string(mFluidConfig.color[0]));
 	colorREdit->onReturnKeyPress(&MainWindow::OnColorRChanged, this);
 	auto colorGEdit = tgui::EditBox::copy(colorREdit);
+	colorGEdit->setText(std::to_string(mFluidConfig.color[1]));
 	colorGEdit->onReturnKeyPress(&MainWindow::OnColorGChanged, this);
 	auto colorBEdit = tgui::EditBox::copy(colorREdit);
+	colorBEdit->setText(std::to_string(mFluidConfig.color[2]));
 	colorBEdit->onReturnKeyPress(&MainWindow::OnColorBChanged, this);
 
 	colorGrid->addWidget(colorTitle, 2, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
@@ -276,7 +293,7 @@ void MainWindow::createMenu()
 	auto modeTitle = tgui::Label::copy(velocityDiffTitle);
 	modeTitle->setText("Parallel mode:");
 	auto modeCheckbox = tgui::CheckBox::create();
-	modeCheckbox->setChecked(false);
+	modeCheckbox->setChecked(mFluidConfig.bParallel);
 	modeCheckbox->onChange(&MainWindow::OnModeChecked, this);
 
 	modeGrid->addWidget(modeTitle, 0, 0, tgui::Grid::Alignment::Left, tgui::Padding(0, 4, 0, 4));
@@ -293,82 +310,83 @@ void MainWindow::createMenu()
 void MainWindow::OnVelocityDiffusionChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.velocityDiffusion = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnColorDiffusionChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.colorDiffusion = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnDensityDiffusionChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.densityDiffusion = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnPressureChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.velocityDiffusion = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnVorticityChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.vorticity = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnForceChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.forceScale = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnRadiusChanged(const tgui::String& _newValue)
 {
-	mFluidConfig.forceRadius = _newValue.toInt();
-	updateFluidConfig();
+	mFluidConfig.radius = _newValue.toInt();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnBloomIntenseChanged(const tgui::String& _newValue)
 {
 	mFluidConfig.bloomIntense = _newValue.toFloat();
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnColorRChanged(const tgui::String& _newValue)
 {
-	mFluidConfig.color.r = _newValue.toInt();
-	updateFluidConfig();
+	mFluidConfig.color[0] = _newValue.toInt();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnColorGChanged(const tgui::String& _newValue)
 {
-	mFluidConfig.color.g = _newValue.toInt();
-	updateFluidConfig();
+	mFluidConfig.color[1] = _newValue.toInt();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnColorBChanged(const tgui::String& _newValue)
 {
-	mFluidConfig.color.b = _newValue.toInt();
-	updateFluidConfig();
+	mFluidConfig.color[2] = _newValue.toInt();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnBloomChecked(bool _isChecked)
 {
-	mFluidConfig.bBloomEnabled = _isChecked;
-	updateFluidConfig();
+	mFluidConfig.bloomEnabled = _isChecked;
+	bFluidChanged = true;
 }
 
 void MainWindow::OnColorfulChecked(bool _isChecked)
 {
 	mFluidConfig.bColorful = _isChecked;
-	updateFluidConfig();
+	bFluidChanged = true;
 }
 
 void MainWindow::OnModeChecked(bool _isChecked)
 {
-	bParallelMode = _isChecked;
+	mFluidConfig.bParallel = _isChecked;
+	bFluidChanged = true;
 }

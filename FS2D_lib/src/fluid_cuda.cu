@@ -274,7 +274,7 @@ __global__ void applyBloom(uint8_t* _colorField, size_t _xSize, Coord2DI _pos, i
 // Export functions
 void setConfig(float _velocityDiffusion, float _colorDiffusion, float _densityDiffusion, float _pressure, float _vorticity,
 			   float _forceScale, float _bloomIntense, float _dt, int _radius, int _velocityIterations, int _pressureIterations,
-			   int _xThreads, int _yThreads, bool _bloomEnabled, bool _colorful)
+			   int _xThreads, int _yThreads, bool _bloomEnabled, bool _colorful, bool _parallel, unsigned char _r, unsigned char _g, unsigned char _b)
 {
 	globalConfig.velocityDiffusion = _velocityDiffusion;
 	globalConfig.colorDiffusion = _colorDiffusion;
@@ -291,13 +291,19 @@ void setConfig(float _velocityDiffusion, float _colorDiffusion, float _densityDi
 	globalConfig.yThreads = _yThreads;
 	globalConfig.bloomEnabled = _bloomEnabled;
 	globalConfig.bColorful = _colorful;
+	globalConfig.bParallel = _parallel;
+	globalConfig.color[0] = _r;
+	globalConfig.color[1] = _g;
+	globalConfig.color[2] = _b;
+
+	globalColorArray[0] = globalConfig.bColorful ? RGBColor({ 1.0f, 0.0f, 0.0f }) : RGBColor({ globalConfig.color[0] / 255.f, globalConfig.color[1] / 255.f, globalConfig.color[2] / 255.f });
 }
 
 void initialization(int _x, int _y)
 {
 	setConfig();
 
-	globalColorArray[0] = { 1.0f, 0.0f, 0.0f };
+	globalColorArray[0] = globalConfig.bColorful ? RGBColor({ 1.0f, 0.0f, 0.0f }) : RGBColor({ globalConfig.color[0] / 255.f, globalConfig.color[1] / 255.f, globalConfig.color[2] / 255.f });
 	globalColorArray[1] = { 0.0f, 1.0f, 0.0f };
 	globalColorArray[2] = { 1.0f, 0.0f, 1.0f };
 	globalColorArray[3] = { 1.0f, 1.0f, 0.0f };
@@ -339,8 +345,9 @@ void finalization()
 
 void compute(uint8_t* _resultField, int _prevX, int _prevY, int _currX, int _currY, bool _isPressed)
 {
-	dim3 threadsPerBlock(globalConfig.xThreads, globalConfig.yThreads);
+	dim3 threadsPerBlock(globalConfig.bParallel ? globalConfig.xThreads : 1, globalConfig.bParallel ? globalConfig.yThreads : 1);
 	dim3 numBlocks(globalXSize / threadsPerBlock.x, globalYSize / threadsPerBlock.y);
+
 
 	computeVorticity<<<numBlocks, threadsPerBlock>>>(globalPrevField, globalVorticityField, globalXSize, globalYSize);
 	applyVorticity<<<numBlocks, threadsPerBlock>>>(globalCurrField, globalPrevField, globalVorticityField, globalXSize, globalYSize, globalConfig.vorticity, globalConfig.dt);

@@ -3,47 +3,23 @@
 #include <TGUI/TGUI.hpp>
 #include <TGUI/Backend/SFML-Graphics.hpp>
 
+#include "fluid.h"
+
 #define WINDOW_WIDTH 1280
+#define MENU_WIDTH 256
 #define WINDOW_HEIGHT 720
-
-struct FluidConfig
-{
-	float velocityDiffusion = 0.f;
-	float colorDiffusion = 0.f;
-	float densityDiffusion = 0.f;
-
-	float pressure = 0.f;
-	float vorticity = 0.f;
-
-	float forceScale = 0.f;
-	int forceRadius = 0;
-
-	float bloomIntense = 0.f;
-	bool bBloomEnabled = true;
-
-	bool bColorful = false;
-
-	sf::Color color = { 128, 128, 128 };
-
-	FluidConfig(float _velocityDiffusion = 0.8f, float _colorDiffusion = 0.8f, float _densityDiffusion = 1.2f,
-		float _pressure = 1.5f, float _vorticity = 50.f, float _forceScale = 1000.f, int _forceRadius = 100,
-		float _bloomIntense = 25000.f, bool _bloomEnabled = true, sf::Color _color = { 128, 128, 128 }, bool _colorful = false) :
-		velocityDiffusion(_velocityDiffusion), colorDiffusion(_colorDiffusion), densityDiffusion(_densityDiffusion),
-		pressure(_pressure), vorticity(_vorticity), forceScale(_forceScale), forceRadius(_forceRadius),
-		bloomIntense(_bloomIntense), bBloomEnabled(_bloomEnabled), color(_color), bColorful(_colorful) {}
-};
 
 struct BaseWindowProperties
 {
 	sf::Uint16 width;
 	sf::Uint16 height;
 
-	sf::Uint8 scale;
+	sf::Uint16 scale;
 
 	sf::Uint16 fieldWidth;
 	sf::Uint16 fieldHeight;
 
-	BaseWindowProperties(sf::Uint16 _width = WINDOW_WIDTH, sf::Uint16 _height = WINDOW_HEIGHT, sf::Uint8 _scale = 2) :
+	BaseWindowProperties(sf::Uint16 _width = WINDOW_WIDTH, sf::Uint16 _height = WINDOW_HEIGHT, sf::Uint16 _scale = 2) :
 		width(_width), height(_height), scale(_scale)
 	{
 		fieldWidth = width / scale;
@@ -83,10 +59,8 @@ protected: // Properties
 
 	BaseWindowProperties mBaseProperties;
 
-	FluidConfig mFluidConfig;
+	Config mFluidConfig;
 	bool bFluidChanged = false;
-
-	bool bParallelMode = false;
 
 	std::vector<sf::Uint8> mPixelBuffer;
 	sf::Texture mFluidTexture;
