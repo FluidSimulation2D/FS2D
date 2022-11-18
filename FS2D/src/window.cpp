@@ -109,7 +109,6 @@ void MainWindow::mainLoop()
 		mFluidSprite.setTexture(mFluidTexture, false);
 		
 		draw(mFluidSprite);
-
 		mGui.draw();
 
 		display();

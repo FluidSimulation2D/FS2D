@@ -109,24 +109,37 @@ __host__ __device__ RGBColor RGBColor::operator*(float _num) const
 	return { R * _num, G * _num, B * _num };
 }
 
+__device__ bool checkObjects(int x, int y)
+{
+	int xcenter = 450 / 2, ycenter = 400 / 2, radius = 100 / 2;
+
+	return ((x - xcenter) * (x - xcenter) + (y - ycenter) * (y - ycenter) <= radius * radius) ||
+		((x - xcenter - 150) * (x - xcenter - 150) + (y - ycenter + 40) * (y - ycenter + 40) <= radius * radius);
+}
+
+__device__ bool checkBounds(int x, int y, int xSize, int ySize)
+{
+	return (x < xSize&& x >= 0 && y < ySize&& y >= 0) && !checkObjects(x, y);
+}
+
 __device__ Coord2D computeU(Particle* _particleField, size_t _xSize, size_t _ySize, const Coord2DI& _coordV, const Coord2D& _coordB, float _alpha, float _beta)
 {
 	int posX = _coordV.x, posY = _coordV.y;
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _particleField[_y * _xSize + _x].u : -_coordB; };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _particleField[_y * _xSize + _x].u : -_coordB; };
 	return (f(posX, posY - 1) + f(posX, posY + 1) + f(posX + 1, posY) + f(posX - 1, posY) + _coordB * _alpha) * (1.0f / _beta);
 }
 
 __device__ float computeP(float* _pressureField, size_t _xSize, size_t _ySize, const Coord2DI& _coord, float _B, float _alpha, float _beta)
 {
 	int posX = _coord.x, posY = _coord.y;
-	auto f = [&](int x, int y) { return (x < _xSize && x >= 0 && y < _ySize && y >= 0) ? _pressureField[y * _xSize + x] : -_pressureField[posY * _xSize + posX]; };
+	auto f = [&](int x, int y) { return checkBounds(x, y, _xSize, _ySize) ? _pressureField[y * _xSize + x] : -_pressureField[posY * _xSize + posX]; };
 	return (f(posX, posY - 1) + f(posX, posY + 1) + f(posX - 1, posY) + f(posX + 1, posY) + _alpha * _B) * (1.0f / _beta);
 }
 
 __device__ RGBColor computeC(Particle* _colorField, size_t _xSize, size_t _ySize, const Coord2DI& _coordPos, const RGBColor& _colorB, float _alpha, float _beta)
 {
 	int x = _coordPos.x, y = _coordPos.y;
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _colorField[_y * _xSize + _x].color : RGBColor(); };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _colorField[_y * _xSize + _x].color : RGBColor(); };
 	return (f(x, y - 1) + f(x, y + 1) + f(x - 1, y) + f(x + 1, y) + _colorB * _alpha) * (1.0f / _beta);
 }
 
@@ -153,30 +166,30 @@ __device__ float divergency(Particle* _particleField, size_t _xSize, size_t _ySi
 {
 	int posX = _coordPos.x, posY = _coordPos.y;
 	Particle& C = _particleField[posY * _xSize + posX];
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _particleField[_y * _xSize + _x].u.x : -C.u.x; };
-	auto g = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _particleField[_y * _xSize + _x].u.y : -C.u.y; };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _particleField[_y * _xSize + _x].u.x : -C.u.x; };
+	auto g = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _particleField[_y * _xSize + _x].u.y : -C.u.y; };
 	return (f(posX + 1, posY) - f(posX - 1, posY) + g(posX, posY + 1) - g(posX, posY - 1)) / 2.0f;
 }
 
 __device__ Coord2D gradient(float* _field, size_t _xSize, size_t _ySize, const Coord2DI& _coordPos)
 {
 	int posX = _coordPos.x, posY = _coordPos.y;
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _field[_y * _xSize + _x] : _field[posY * _xSize + posX]; };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _field[_y * _xSize + _x] : _field[posY * _xSize + posX]; };
 	return { (f(posX + 1, posY) - f(posX - 1, posY)) * 0.5f, (f(posX, posY + 1) - f(posX, posY - 1)) / 2.0f };
 }
 
 __device__ Coord2D absGradient(float* _field, size_t _xSize, size_t _ySize, const Coord2DI& _coordPos)
 {
 	int posX = _coordPos.x, posY = _coordPos.y;
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _field[_y * _xSize + _x] : _field[posY * _xSize + posX]; };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _field[_y * _xSize + _x] : _field[posY * _xSize + posX]; };
 	return { (abs(f(posX + 1, posY)) - abs(f(posX - 1, posY))) / 2.0f, (abs(f(posX, posY + 1)) - abs(f(posX, posY - 1))) / 2.0f };
 }
 
 __device__ float curl(Particle* _particleField, size_t _xSize, size_t _ySize, const Coord2DI& _coordPos)
 {
 	int posX = _coordPos.x, posY = _coordPos.y;
-	auto f = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _particleField[_y * _xSize + _x].u.x : -_particleField[posY * _xSize + posX].u.x; };
-	auto g = [&](int _x, int _y) { return (_x < _xSize && _x >= 0 && _y < _ySize && _y >= 0) ? _particleField[_y * _xSize + _x].u.y : -_particleField[posY * _xSize + posX].u.y; };
+	auto f = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _particleField[_y * _xSize + _x].u.x : -_particleField[posY * _xSize + posX].u.x; };
+	auto g = [&](int _x, int _y) { return checkBounds(_x, _y, _xSize, _ySize) ? _particleField[_y * _xSize + _x].u.y : -_particleField[posY * _xSize + posX].u.y; };
 	return ((g(posX, posY + 1) - g(posX, posY - 1)) - (f(posX + 1, posY) - f(posX - 1, posY))) / 2.0f;
 }
 
@@ -236,8 +249,13 @@ __global__ void computeVorticity(Particle* _particleField, float* _fieldV, size_
 	_fieldV[y * _xSize + x] = curl(_particleField, _xSize, _ySize, { x, y });
 }
 
-__global__ void applyForce(Particle* _particleField, size_t _xSize, RGBColor _color, Coord2D _coordF, Coord2DI _pos, int _r, float _dt)
+__global__ void applyForce(Particle* _particleField, size_t _xSize, size_t _ySize, RGBColor _color, Coord2D _coordF, Coord2DI _pos, int _r, float _dt)
 {
+	if (!checkBounds(_pos.x, _pos.y, _xSize, _ySize))
+	{
+		return;
+	}
+
 	int x = blockIdx.x * blockDim.x + threadIdx.x, y = blockIdx.y * blockDim.y + threadIdx.y;
 	float e = expf(-((x - _pos.x) * (x - _pos.x) + (y - _pos.y) * (y - _pos.y)) / _r);
 	Particle& p = _particleField[y * _xSize + x];
@@ -360,6 +378,20 @@ void compute(uint8_t* _resultField, int _prevX, int _prevY, int _currX, int _cur
 		std::swap(globalCurrField, globalPrevField);
 	}
 
+	bool boundaryForce = true;
+
+	if (boundaryForce)
+	{
+		int curY = 10, prevY = 0;
+		Coord2D vector = { 0, (curY - prevY) * 100 };
+
+		for (int x = 175; x < 375; x += 25)
+		{
+			applyForce << <numBlocks, threadsPerBlock >> > (globalPrevField, globalXSize, globalYSize, globalCurrentColor,
+				vector, { x, curY }, globalConfig.radius, globalConfig.dt);
+		}
+	}
+
 	if (_isPressed)
 	{
 		timeSincePress = 0.0f;
@@ -367,7 +399,7 @@ void compute(uint8_t* _resultField, int _prevX, int _prevY, int _currX, int _cur
 
 		float w = elapsedTime - sci(elapsedTime);
 		globalCurrentColor = globalConfig.bColorful ? globalColorArray[sci(elapsedTime) % globalColorArraySize] * (1 - w) + globalColorArray[sci((elapsedTime) + 1) % globalColorArraySize] * w : globalColorArray[0];
-		applyForce<<<numBlocks, threadsPerBlock>>>(globalPrevField, globalXSize, globalCurrentColor,
+		applyForce<<<numBlocks, threadsPerBlock>>>(globalPrevField, globalXSize, globalYSize, globalCurrentColor,
 							   { (_currX - _prevX) * globalConfig.forceScale, (_currY - _prevY) * globalConfig.forceScale }, { _currX, _currY }, globalConfig.radius, globalConfig.dt);
 	}
 	else
