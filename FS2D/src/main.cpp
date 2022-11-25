@@ -2,9 +2,9 @@
 
 int main()
 {
-	MainWindow window;
+    MainWindow window;
 
-	window.mainLoop();
+    window.mainLoop();
 
-	return 0;
+    return 0;
 }
